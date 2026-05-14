@@ -1,5 +1,8 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+'use client'
+
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,19 +11,23 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/login');
+    } else if (!isLoading && user && allowedRoles && !allowedRoles.includes(user.role)) {
+      const rolePath = user.role === 'ADMIN' ? '/admin' : user.role === 'DOCTOR' ? '/doctor' : '/patient';
+      router.replace(rolePath);
+    }
+  }, [user, isLoading, allowedRoles, router]);
 
   if (isLoading) {
     return <div className="p-8 text-center text-slate-500">Loading...</div>;
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect to their respective dashboard
-    const rolePath = user.role === 'ADMIN' ? '/admin' : user.role === 'DOCTOR' ? '/doctor' : '/patient';
-    return <Navigate to={rolePath} replace />;
+  if (!user || (allowedRoles && !allowedRoles.includes(user.role))) {
+    return null;
   }
 
   return <>{children}</>;
