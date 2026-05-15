@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, varchar, boolean, integer, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, varchar, boolean, integer, timestamp, pgEnum, index } from 'drizzle-orm/pg-core';
 
 export const userRoleEnum = pgEnum('user_role', ['ADMIN', 'DOCTOR', 'PATIENT']);
 export const appointmentTypeEnum = pgEnum('appointment_type', ['PHYSICAL', 'VIRTUAL']);
@@ -46,3 +46,15 @@ export const documents = pgTable('documents', {
   url: text('url').notNull(),
   uploadDate: timestamp('upload_date').defaultNow().notNull(),
 });
+
+export const passwordResetOtps = pgTable('password_reset_otps', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  otpHash: varchar('otp_hash', { length: 255 }).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  usedAt: timestamp('used_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('password_reset_otps_user_id_idx').on(table.userId),
+  expiresAtIdx: index('password_reset_otps_expires_at_idx').on(table.expiresAt),
+}));
