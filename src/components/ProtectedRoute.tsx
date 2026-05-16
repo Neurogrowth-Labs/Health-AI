@@ -15,7 +15,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace('/login');
+      router.replace('/auth/sign-in');
     } else if (!isLoading && user && allowedRoles && !allowedRoles.includes(user.role)) {
       const rolePath = user.role === 'ADMIN' ? '/admin' : user.role === 'DOCTOR' ? '/doctor' : '/patient';
       router.replace(rolePath);

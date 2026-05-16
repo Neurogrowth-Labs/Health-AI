@@ -1,53 +1,145 @@
-'use client'
+'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from './ui/button';
-import { HeartPulse, UserCircle, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { HeartPulse, LogOut, PanelLeft, Settings, User } from 'lucide-react';
 
 export default function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isDashboardRoute = Boolean(
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/doctor') ||
+    pathname?.startsWith('/patient'),
+  );
+
+  if (
+    pathname?.startsWith('/auth/sign-in') ||
+    pathname?.startsWith('/auth/register') ||
+    pathname?.startsWith('/forgot-password')
+  ) {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push('/auth/sign-in');
+  };
+
+  const handleToggleDrawer = () => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'b',
+        ctrlKey: true,
+        metaKey: true,
+      }),
+    );
+  };
+
+  const getDashboardPath = () => {
+    if (!user) return '/';
+    switch (user.role) {
+      case 'ADMIN':
+        return '/admin';
+      case 'DOCTOR':
+        return '/doctor';
+      default:
+        return '/patient';
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
-    <header className="flex items-center justify-between px-4 sm:px-8 py-4 bg-white border-b border-slate-200 sticky top-0 z-10 w-full">
-      <div className="w-full max-w-7xl mx-auto flex items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center gap-2">
-            <HeartPulse className="h-4 w-4 text-white" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <HeartPulse className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold tracking-tight">Health<span className="text-blue-600">AI</span></span>
+          <span className="text-xl font-bold tracking-tight">
+            Health<span className="text-primary">AI</span>
+          </span>
         </Link>
-        
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-3">
           {user ? (
             <>
-              <div className="text-right flex-col hidden md:flex">
-                <p className="text-xs font-bold text-slate-900">{user.name}</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider">{user.role}</p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => router.push(user.role === 'ADMIN' ? '/admin' : user.role === 'DOCTOR' ? '/doctor' : '/patient')} className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center border-2 border-white shadow-sm hover:bg-slate-300">
-                <UserCircle className="h-6 w-6 text-slate-600" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
+              {isDashboardRoute && (
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  className="md:hidden"
+                  onClick={handleToggleDrawer}
+                  aria-label="Open sidebar"
+                >
+                  <PanelLeft className="h-4 w-4" />
+                </Button>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-3 outline-none">
+                  <div className="hidden flex-col items-end md:flex">
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {user.role.toLowerCase()}
+                    </p>
+                  </div>
+                  <Avatar>
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push(getDashboardPath())}>
+                    <User className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push(`${getDashboardPath()}/settings`)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
+              <Button variant="ghost" onClick={() => router.push('/auth/sign-in')}>
+                Login
               </Button>
-              <Button asChild>
-                <Link href="/register">Sign Up</Link>
-              </Button>
+              <Button onClick={() => router.push('/auth/register')}>Sign Up</Button>
             </>
           )}
         </div>

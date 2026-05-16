@@ -1,4 +1,6 @@
 export type UserRole = 'ADMIN' | 'DOCTOR' | 'PATIENT';
+export type SubscriptionPlan = 'FREE' | 'BASIC' | 'PREMIUM' | 'ENTERPRISE';
+export type SubscriptionStatus = 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'PAST_DUE';
 
 export interface User {
   id: string;
@@ -6,6 +8,9 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string;
+  practice?: string;
+  bio?: string;
+  virtualChatFee?: number;
 }
 
 export interface Doctor extends User {
@@ -17,6 +22,18 @@ export interface Doctor extends User {
 
 export interface Patient extends User {
   role: 'PATIENT';
+}
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
 }
 
 export interface Appointment {

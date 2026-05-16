@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { compareSync, hashSync } from 'bcryptjs';
 import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { passwordResetOtps, users } from '@/lib/schema';
+import { authUsers, passwordResetOtps } from '@/lib/schema';
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +20,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const [user] = await db
+      .select({ id: authUsers.id })
+      .from(authUsers)
+      .where(eq(authUsers.email, email))
+      .limit(1);
     if (!user) {
       return NextResponse.json({ error: 'Invalid OTP or email' }, { status: 400 });
     }
@@ -43,7 +47,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid OTP or email' }, { status: 400 });
     }
 
-    await db.update(users).set({ password: hashSync(newPassword, 10) }).where(eq(users.id, user.id));
+    await db.update(authUsers).set({ password: hashSync(newPassword, 10) }).where(eq(authUsers.id, user.id));
     await db.update(passwordResetOtps).set({ usedAt: now }).where(eq(passwordResetOtps.id, otpRecord.id));
 
     return NextResponse.json({ message: 'Password reset successful' });
