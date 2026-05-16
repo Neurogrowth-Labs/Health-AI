@@ -75,8 +75,8 @@ export default function ForgotPasswordPage() {
         setError(data.error || 'Failed to reset password');
         return;
       }
-      setMessage('Password reset successful. Redirecting to login...');
-      setTimeout(() => router.push('/login'), 1200);
+      setMessage('Password reset successful. Redirecting to sign in...');
+      setTimeout(() => router.push('/auth/sign-in'), 1200);
     } finally {
       setIsSubmitting(false);
     }
@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
               {isSubmitting ? 'Please wait...' : otpSent ? 'Reset Password' : 'Send OTP'}
             </Button>
             <div className="text-sm text-center text-slate-500">
-              Back to <Link href="/login" className="text-blue-600 hover:underline">Sign in</Link>
+              Back to <Link href="/auth/sign-in" className="text-blue-600 hover:underline">Sign in</Link>
             </div>
           </CardFooter>
         </form>

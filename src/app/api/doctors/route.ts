@@ -5,20 +5,24 @@ import { eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
-    const doctors = await db
+    const baseDoctors = await db
       .select({
         id: users.id,
         name: users.name,
         email: users.email,
-        practice: users.practice,
-        bio: users.bio,
-        virtualChatFee: users.virtualChatFee,
       })
       .from(users)
       .where(eq(users.role, 'DOCTOR'));
 
+    const doctors = baseDoctors.map((doctor) => ({
+      ...doctor,
+      practice: null,
+      bio: null,
+      virtualChatFee: null,
+    }));
+
     return NextResponse.json({ doctors });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Fetch doctors error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

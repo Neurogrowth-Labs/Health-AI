@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { hashSync } from 'bcryptjs';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { passwordResetOtps, users } from '@/lib/schema';
+import { authUsers, passwordResetOtps } from '@/lib/schema';
 
 const OTP_LENGTH = 6;
 const DEFAULT_OTP_EXPIRY_MINUTES = 10;
@@ -23,7 +23,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const [user] = await db
+      .select({ id: authUsers.id })
+      .from(authUsers)
+      .where(eq(authUsers.email, email))
+      .limit(1);
     if (!user) {
       return NextResponse.json({
         message: 'If this email is registered, an OTP has been sent.',

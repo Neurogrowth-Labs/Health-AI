@@ -1,5 +1,8 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { db } from './db';
+import { users } from './schema';
+import { eq } from 'drizzle-orm';
 
 const COOKIE_NAME = 'auth_token';
 
@@ -14,10 +17,6 @@ export interface JwtPayload {
   name: string;
   email: string;
   role: string;
-  practice?: string | null;
-  bio?: string | null;
-  virtualChatFee?: number | null;
-  avatar?: string | null;
 }
 
 export async function signToken(payload: JwtPayload): Promise<string> {
@@ -40,8 +39,33 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
 export async function getAuthUser(): Promise<JwtPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
+
   if (!token) return null;
-  return verifyToken(token);
+
+  const payload = await verifyToken(token);
+  if (!payload?.id) return null;
+
+  // Verify user still exists in database
+  const result = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+    })
+    .from(users)
+    .where(eq(users.id, payload.id))
+    .limit(1);
+
+  if (result.length === 0) return null;
+
+  const user = result[0];
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
 }
 
 export function authCookieOptions(token: string) {
