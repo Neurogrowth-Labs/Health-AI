@@ -86,7 +86,7 @@ export function ClinicalIntelligenceHub() {
         </div>
       </div>
 
-      <div>
+      {/* <div>
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">AI tools in this hub</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {overviewHubTools.map((cap) => (
@@ -122,7 +122,7 @@ export function ClinicalIntelligenceHub() {
             </AiCapabilityCard>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <Card className="border-[#00C2A8]/25 bg-[#00C2A8]/[0.06] shadow-md">
         <CardHeader className="pb-2">

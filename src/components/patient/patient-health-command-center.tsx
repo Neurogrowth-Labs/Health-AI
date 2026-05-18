@@ -158,7 +158,7 @@ export function PatientHealthCommandCenter() {
         ))}
       </div>
 
-      <div>
+      {/* <div>
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">AI tools in this hub</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
           {patientOverviewTools.map((cap) => (
@@ -176,7 +176,7 @@ export function PatientHealthCommandCenter() {
             </AiCapabilityCard>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <Card className="border-slate-200/80 bg-slate-50/50">
         <CardHeader className="pb-2">

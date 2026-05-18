@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-function isFullBleedAuthPath(pathname: string) {
+function isFullBleedPath(pathname: string) {
   return (
+    pathname === '/' ||
     pathname.startsWith('/auth/') ||
     pathname.startsWith('/forgot-password')
   );
@@ -15,7 +16,7 @@ function isFullBleedAuthPath(pathname: string) {
 
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '';
-  const fullBleed = isFullBleedAuthPath(pathname);
+  const fullBleed = isFullBleedPath(pathname);
   const isBrandedPortal = pathname.startsWith('/doctor') || pathname.startsWith('/patient');
 
   return (
