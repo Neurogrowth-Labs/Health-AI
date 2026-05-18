@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,27 @@ export function PatientHealthCommandCenter() {
   const { user } = useAuth();
   const router = useRouter();
   const name = user?.name?.trim() || 'there';
+  const [upcomingCount, setUpcomingCount] = useState<number | null>(null);
+
+  const fetchAppointments = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/appointments?patientId=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const upcoming = (data.appointments ?? []).filter(
+          (a: { status: string }) => a.status === 'PENDING' || a.status === 'CONFIRMED',
+        );
+        setUpcomingCount(upcoming.length);
+      }
+    } catch {
+      // silent
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
 
   return (
     <div className="flex min-h-0 flex-col gap-6 text-[#0A2540]">
@@ -139,7 +160,7 @@ export function PatientHealthCommandCenter() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Upcoming appointments', value: '—', hint: 'Smart booking + no-show AI' },
+          { label: 'Upcoming appointments', value: upcomingCount !== null ? String(upcomingCount) : '—', hint: 'Smart booking + no-show AI' },
           { label: 'Active consults', value: '—', hint: 'Live assist + transcription' },
           { label: 'Documents processed', value: '—', hint: 'OCR & categorization' },
           { label: 'Health score', value: '—', hint: 'GET /ai/health-score' },
@@ -192,7 +213,7 @@ export function PatientHealthCommandCenter() {
         </CardContent>
       </Card>
 
-      <PatientCrossAiLayer />
+      {/* <PatientCrossAiLayer /> */}
     </div>
   );
 }

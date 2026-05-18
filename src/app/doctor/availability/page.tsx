@@ -1,23 +1,120 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DoctorToggle } from '@/components/doctor/doctor-toggle';
 import { AiCapabilityCard } from '@/components/doctor/ai-capability-card';
 import { availabilityTools } from '@/lib/doctor-ai-capabilities';
-import { CalendarDays, Sparkles, Zap } from 'lucide-react';
+import { CalendarDays, Sparkles, Zap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const dayIndexMap: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5 };
 const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
 
-function slotClass() {
-  return 'bg-slate-50 border-slate-200/80 text-slate-400';
+interface AvailabilitySlot {
+  id: string;
+  doctorId: string;
+  dayOfWeek: number;
+  timeSlot: string;
+  isAvailable: boolean;
+  autoSchedule: boolean;
 }
 
 export default function AvailabilityPage() {
+  const { user } = useAuth();
   const [autoSchedule, setAutoSchedule] = useState(false);
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const fetchSlots = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/doctors/availability?doctorId=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSlots(data.slots ?? []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch availability:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchSlots();
+  }, [fetchSlots]);
+
+  const isSlotAvailable = (day: string, hour: string): boolean => {
+    const dayNum = dayIndexMap[day];
+    const slot = slots.find((s) => s.dayOfWeek === dayNum && s.timeSlot === hour);
+    return slot?.isAvailable ?? false;
+  };
+
+  const toggleSlot = async (day: string, hour: string) => {
+    if (!user?.id) return;
+    const dayNum = dayIndexMap[day];
+    const key = `${day}-${hour}`;
+    setSaving(key);
+
+    const current = isSlotAvailable(day, hour);
+
+    // Optimistic update
+    setSlots((prev) => {
+      const idx = prev.findIndex((s) => s.dayOfWeek === dayNum && s.timeSlot === hour);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], isAvailable: !current };
+        return updated;
+      }
+      return [
+        ...prev,
+        { id: '', doctorId: user.id, dayOfWeek: dayNum, timeSlot: hour, isAvailable: !current, autoSchedule: false },
+      ];
+    });
+
+    try {
+      await fetch('/api/doctors/availability', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doctorId: user.id,
+          dayOfWeek: dayNum,
+          timeSlot: hour,
+          isAvailable: !current,
+          autoSchedule,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to update slot:', err);
+      // Revert on error
+      setSlots((prev) => {
+        const idx = prev.findIndex((s) => s.dayOfWeek === dayNum && s.timeSlot === hour);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], isAvailable: current };
+          return updated;
+        }
+        return prev;
+      });
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const slotClass = (day: string, hour: string) => {
+    if (isSlotAvailable(day, hour)) {
+      return 'bg-emerald-100 border-emerald-300 text-emerald-700';
+    }
+    return 'bg-slate-50 border-slate-200/80 text-slate-400';
+  };
+
+  const availableCount = slots.filter((s) => s.isAvailable).length;
+  const totalCount = days.length * hours.length;
 
   return (
     <div className="flex min-h-0 flex-col gap-4 text-[#0A2540]">
@@ -68,50 +165,66 @@ export default function AvailabilityPage() {
             </CardTitle>
             <div className="flex flex-wrap gap-3 text-[10px] font-medium text-slate-600 sm:text-xs">
               <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Confirmed
+                <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Available
               </span>
               <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> Predicted no-show
+                <span className="h-2.5 w-2.5 rounded-sm bg-slate-200" /> Unavailable
               </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm bg-red-500" /> High priority
+              <span className="text-slate-400">
+                {availableCount}/{totalCount} slots open
               </span>
             </div>
           </CardHeader>
           <CardContent className="overflow-x-auto pt-4">
-            <p className="mb-3 text-xs text-slate-500">No bookings loaded — grid is ready for your schedule data.</p>
-            <div className="min-w-[640px]">
-              <div
-                className="grid gap-1"
-                style={{ gridTemplateColumns: `100px repeat(${days.length}, minmax(0, 1fr))` }}
-              >
-                <div />
-                {days.map((d) => (
-                  <div key={d} className="px-1 text-center font-mono text-xs font-semibold text-slate-500">
-                    {d}
-                  </div>
-                ))}
-                {hours.flatMap((h) => [
-                  <div
-                    key={`${h}-label`}
-                    className="flex items-center justify-end pr-2 font-mono text-[11px] text-slate-500"
-                  >
-                    {h}
-                  </div>,
-                  ...days.map((day) => (
-                    <button
-                      key={`${day}-${h}`}
-                      type="button"
-                      title={`${day} ${h}`}
-                      className={cn(
-                        'h-10 rounded-md border text-[10px] font-medium transition hover:opacity-95',
-                        slotClass(),
-                      )}
-                    />
-                  )),
-                ])}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                <span className="ml-2 text-sm text-slate-500">Loading availability...</span>
               </div>
-            </div>
+            ) : (
+              <>
+                <p className="mb-3 text-xs text-slate-500">
+                  Click a slot to toggle availability. Changes save automatically.
+                </p>
+                <div className="min-w-[640px]">
+                  <div
+                    className="grid gap-1"
+                    style={{ gridTemplateColumns: `100px repeat(${days.length}, minmax(0, 1fr))` }}
+                  >
+                    <div />
+                    {days.map((d) => (
+                      <div key={d} className="px-1 text-center font-mono text-xs font-semibold text-slate-500">
+                        {d}
+                      </div>
+                    ))}
+                    {hours.flatMap((h) => [
+                      <div
+                        key={`${h}-label`}
+                        className="flex items-center justify-end pr-2 font-mono text-[11px] text-slate-500"
+                      >
+                        {h}
+                      </div>,
+                      ...days.map((day) => (
+                        <button
+                          key={`${day}-${h}`}
+                          type="button"
+                          title={`${day} ${h} — ${isSlotAvailable(day, h) ? 'Available' : 'Unavailable'}`}
+                          onClick={() => toggleSlot(day, h)}
+                          disabled={saving === `${day}-${h}`}
+                          className={cn(
+                            'h-10 rounded-md border text-[10px] font-medium transition hover:opacity-80 active:scale-95',
+                            slotClass(day, h),
+                            saving === `${day}-${h}` && 'animate-pulse',
+                          )}
+                        >
+                          {isSlotAvailable(day, h) ? 'Open' : ''}
+                        </button>
+                      )),
+                    ])}
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

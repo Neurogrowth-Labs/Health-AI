@@ -27,7 +27,7 @@ export default function Footer() {
             </Link>
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-primary">Support</span> v2.4.1
+            <span className="font-medium text-primary">Support</span> v1.0.0
           </p>
         </div>
       </div>

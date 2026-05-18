@@ -126,7 +126,7 @@ export default function Home() {
             <Button
               size="lg"
               onClick={() => router.push('/auth/register')}
-              className="gap-2 bg-[#00C2A8] text-[#0A2540] hover:bg-[#00C2A8]/90 font-bold px-8"
+              className="gap-2 rounded-full bg-[#00C2A8] text-[#0A2540] hover:bg-[#00C2A8]/90 font-bold px-8"
             >
               Get Started — it&apos;s free
               <ArrowRight className="h-4 w-4" />
@@ -135,7 +135,7 @@ export default function Home() {
               size="lg"
               variant="outline"
               onClick={() => router.push('/auth/sign-in')}
-              className="gap-2 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white px-8"
+              className="gap-2 rounded-full border-white bg-transparent text-white hover:bg-white/10 hover:text-white px-8"
             >
               Login
             </Button>
