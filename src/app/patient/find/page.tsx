@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Video, CalendarPlus, Loader2 } from 'lucide-react';
+import { BookingDialog } from '@/components/patient/booking-dialog';
 
 interface Doctor {
   id: string;
@@ -36,6 +37,7 @@ export default function FindDoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [practiceFilter, setPracticeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [bookingDoctor, setBookingDoctor] = useState<Doctor | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export default function FindDoctorsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => alert('Book physical appointment feature coming soon.')}
+                          onClick={() => setBookingDoctor(doctor)}
                         >
                           <CalendarPlus className="h-4 w-4 mr-2" /> Book
                         </Button>
@@ -148,6 +150,17 @@ export default function FindDoctorsPage() {
       </Card>
 
       <PatientCrossAiLayer />
+
+      {bookingDoctor && (
+        <BookingDialog
+          open={!!bookingDoctor}
+          onOpenChange={(open) => { if (!open) setBookingDoctor(null); }}
+          doctor={bookingDoctor}
+          onBooked={() => {
+            // Could refresh appointments or show a toast
+          }}
+        />
+      )}
     </div>
   );
 }

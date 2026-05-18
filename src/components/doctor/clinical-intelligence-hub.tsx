@@ -124,7 +124,7 @@ export function ClinicalIntelligenceHub() {
         </div>
       </div> */}
 
-      <Card className="border-[#00C2A8]/25 bg-[#00C2A8]/[0.06] shadow-md">
+      {/* <Card className="border-[#00C2A8]/25 bg-[#00C2A8]/[0.06] shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0A2540]">
             <Cpu className="h-5 w-5 text-[#00C2A8]" aria-hidden />
@@ -150,7 +150,7 @@ export function ClinicalIntelligenceHub() {
             </ul>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

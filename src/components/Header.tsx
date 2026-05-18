@@ -74,19 +74,31 @@ export default function Header() {
   };
 
   const showHealthBranding = isDoctorPortal || isPatientPortal;
+  const isLandingPage = pathname === '/' && !user;
   const homeHref = isDoctorPortal ? '/doctor' : isPatientPortal ? '/patient' : '/';
 
   return (
     <header
       className={cn(
         'sticky top-0 z-50 w-full border-b backdrop-blur supports-[backdrop-filter]:bg-background/60',
-        showHealthBranding
-          ? 'border-sky-100/80 bg-white/90 supports-[backdrop-filter]:bg-white/80'
-          : 'border-border bg-background/95',
+        isLandingPage
+          ? 'border-white/10 bg-[#0A2540]/95 supports-[backdrop-filter]:bg-[#0A2540]/90'
+          : showHealthBranding
+            ? 'border-sky-100/80 bg-white/90 supports-[backdrop-filter]:bg-white/80'
+            : 'border-border bg-background/95',
       )}
     >
       <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
-        {showHealthBranding ? (
+        {isLandingPage ? (
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00C2A8]/15">
+              <HeartPulse className="h-4 w-4 text-[#00C2A8]" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">
+              Health<span className="text-[#00C2A8]">AI</span>
+            </span>
+          </Link>
+        ) : showHealthBranding ? (
           <Link href={homeHref} className="flex items-center gap-2.5">
             <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element -- stable URL from /public */}
@@ -168,10 +180,21 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => router.push('/auth/sign-in')}>
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/auth/sign-in')}
+                className={cn(isLandingPage && 'text-white hover:bg-white/10 hover:text-white')}
+              >
                 Login
               </Button>
-              <Button onClick={() => router.push('/auth/register')}>Sign Up</Button>
+              <Button
+                onClick={() => router.push('/auth/register')}
+                className={cn(
+                  isLandingPage && 'rounded-full bg-[#00C2A8] text-[#0A2540] hover:bg-[#00C2A8]/90 font-semibold',
+                )}
+              >
+                Sign Up
+              </Button>
             </>
           )}
         </div>

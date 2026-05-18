@@ -130,7 +130,7 @@ export default function PatientSettingsPage() {
                 value={form.phone}
                 onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
                 disabled={loading || saving}
-                placeholder="+84..."
+                placeholder=""
               />
             </div>
 

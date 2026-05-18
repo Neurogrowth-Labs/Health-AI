@@ -90,7 +90,7 @@ export function AuthShell({ children }: AuthShellProps) {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Headphones className="h-4 w-4 text-sky-600/80" aria-hidden />
             <span>
-              <span className="font-medium text-slate-700">Support</span> v2.4.1
+              <span className="font-medium text-slate-700">Support</span> v1.0.0
             </span>
           </div>
         </div>
