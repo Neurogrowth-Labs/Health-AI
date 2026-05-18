@@ -36,12 +36,10 @@ interface DashboardShellProps {
   activeItemClassName: string;
   inactiveItemClassName: string;
   children: React.ReactNode;
-  /** Product mark — string should be a path under /public (e.g. /logo-healthai.png) for reliable loading */
+  /** Path under /public (e.g. /logo-healthai.png) or static import */
   brandLogo?: StaticImageData | string;
   className?: string;
-  /** Merged onto the floating sidebar surface */
   sidebarClassName?: string;
-  /** Main content column behind pages */
   insetClassName?: string;
 }
 
@@ -84,10 +82,7 @@ export default function DashboardShell({
               )
             : undefined
         }
-        className={cn(
-          'top-16 h-[calc(100svh-4rem)]',
-          sidebarClassName,
-        )}
+        className={cn('top-16 h-[calc(100svh-4rem)]', sidebarClassName)}
       >
         <SidebarHeader
           className={cn(
@@ -99,7 +94,7 @@ export default function DashboardShell({
             <div className="flex items-start gap-2.5 px-2 py-2">
               <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-sm">
                 {brandLogoSrc ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- avoid optimizer issues inside floating sidebar
+                  // eslint-disable-next-line @next/next/no-img-element -- reliable in floating sidebar
                   <img
                     src={brandLogoSrc}
                     alt="Health AI"
@@ -135,7 +130,8 @@ export default function DashboardShell({
             <SidebarMenu>
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.path || (item.path !== rootPath && pathname.startsWith(item.path));
+                const isActive =
+                  pathname === item.path || (item.path !== rootPath && pathname.startsWith(item.path));
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton

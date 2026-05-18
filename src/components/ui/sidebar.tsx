@@ -162,7 +162,6 @@ function Sidebar({
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
-  /** Merged onto the inner sidebar panel (desktop + mobile sheet body) */
   innerClassName?: string
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()

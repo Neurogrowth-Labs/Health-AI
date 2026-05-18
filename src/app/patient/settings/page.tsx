@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { PatientAiModuleSection } from '@/components/patient/patient-ai-module-section';
+import { PatientCrossAiLayer } from '@/components/patient/patient-health-command-center';
+import { patientSettingsTools } from '@/lib/patient-ai-capabilities';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,10 +87,17 @@ export default function PatientSettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Complete Your Profile</h2>
+    <div className="space-y-8">
+      <PatientAiModuleSection
+        eyebrow="Settings"
+        title="AI Personalization Engine"
+        description="Preference learning, consent guidance, smart notifications, and behavioral insights — always under your control."
+        tools={patientSettingsTools}
+      />
 
-      <Card>
+      <h2 className="text-2xl font-bold text-[#0A2540]">Profile</h2>
+
+      <Card className="border-slate-200/90 shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -169,6 +179,8 @@ export default function PatientSettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      <PatientCrossAiLayer />
     </div>
   );
 }

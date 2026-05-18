@@ -27,6 +27,7 @@ export default function Header() {
     pathname?.startsWith('/patient'),
   );
   const isDoctorPortal = Boolean(pathname?.startsWith('/doctor'));
+  const isPatientPortal = Boolean(pathname?.startsWith('/patient'));
 
   if (
     pathname?.startsWith('/auth/sign-in') ||
@@ -72,18 +73,21 @@ export default function Header() {
       .slice(0, 2);
   };
 
+  const showHealthBranding = isDoctorPortal || isPatientPortal;
+  const homeHref = isDoctorPortal ? '/doctor' : isPatientPortal ? '/patient' : '/';
+
   return (
     <header
       className={cn(
         'sticky top-0 z-50 w-full border-b backdrop-blur supports-[backdrop-filter]:bg-background/60',
-        isDoctorPortal
+        showHealthBranding
           ? 'border-sky-100/80 bg-white/90 supports-[backdrop-filter]:bg-white/80'
           : 'border-border bg-background/95',
       )}
     >
       <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
-        {isDoctorPortal ? (
-          <Link href="/doctor" className="flex items-center gap-2.5">
+        {showHealthBranding ? (
+          <Link href={homeHref} className="flex items-center gap-2.5">
             <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element -- stable URL from /public */}
               <img

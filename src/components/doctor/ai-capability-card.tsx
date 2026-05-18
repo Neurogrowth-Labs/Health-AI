@@ -3,7 +3,9 @@
 import type { ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { AiCapabilityDef } from '@/lib/doctor-ai-capabilities';
+import type { AiCapabilityDef } from '@/lib/ai-capability-types';
+
+export type AiCapabilityLike = AiCapabilityDef;
 
 type AiCapabilityCardProps = {
   capability: AiCapabilityDef;
@@ -30,6 +32,11 @@ export function AiCapabilityCard({ capability, children, className }: AiCapabili
             <li key={b}>{b}</li>
           ))}
         </ul>
+        {capability.api ? (
+          <p className="rounded-md bg-slate-50 px-2 py-1.5 font-mono text-[10px] text-slate-600">
+            API {capability.api}
+          </p>
+        ) : null}
         {children ? <div className="mt-auto border-t border-slate-100 pt-3">{children}</div> : null}
       </CardContent>
     </Card>

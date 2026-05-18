@@ -1,5 +1,5 @@
 /** Product capability copy for the doctor AI dashboards — not live patient data. */
-import type { LucideIcon } from 'lucide-react';
+import type { AiCapabilityDef } from '@/lib/ai-capability-types';
 import {
   Activity,
   AlarmClock,
@@ -24,13 +24,7 @@ import {
   Wallet,
 } from 'lucide-react';
 
-export type AiCapabilityDef = {
-  id: string;
-  title: string;
-  bullets: string[];
-  icon: LucideIcon;
-  outputHint?: string;
-};
+export type { AiCapabilityDef } from '@/lib/ai-capability-types';
 
 export const overviewHubTools: AiCapabilityDef[] = [
   {

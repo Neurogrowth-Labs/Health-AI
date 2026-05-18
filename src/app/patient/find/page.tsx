@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { PatientAiModuleSection } from '@/components/patient/patient-ai-module-section';
+import { PatientCrossAiLayer } from '@/components/patient/patient-health-command-center';
+import { patientFindDoctorTools } from '@/lib/patient-ai-capabilities';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,10 +54,17 @@ export default function FindDoctorsPage() {
       : doctors;
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-8">
+      <PatientAiModuleSection
+        eyebrow="Find a doctor"
+        title="AI Matchmaking Engine"
+        description="Semantic search, personalized recommendations, and trust-aware ranking help you pick the right clinician — not just the nearest name on a list."
+        tools={patientFindDoctorTools}
+      />
+
+      <Card className="border-slate-200/90 shadow-md">
         <CardHeader>
-          <CardTitle>Find Doctors</CardTitle>
+          <CardTitle>Directory</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-6">
@@ -136,6 +146,8 @@ export default function FindDoctorsPage() {
           )}
         </CardContent>
       </Card>
+
+      <PatientCrossAiLayer />
     </div>
   );
 }

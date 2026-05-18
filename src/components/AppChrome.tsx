@@ -16,13 +16,13 @@ function isFullBleedAuthPath(pathname: string) {
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '';
   const fullBleed = isFullBleedAuthPath(pathname);
-  const isDoctorPortal = pathname.startsWith('/doctor');
+  const isBrandedPortal = pathname.startsWith('/doctor') || pathname.startsWith('/patient');
 
   return (
     <div
       className={cn(
         'flex min-h-screen w-full flex-col font-sans text-slate-900',
-        isDoctorPortal
+        isBrandedPortal
           ? 'bg-gradient-to-b from-sky-50/70 via-[#F5F7FA] to-teal-50/40'
           : 'bg-[#F5F7FA]',
       )}
