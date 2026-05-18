@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { StaticImageData } from 'next/image';
 import type { LucideIcon } from 'lucide-react';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -35,6 +36,13 @@ interface DashboardShellProps {
   activeItemClassName: string;
   inactiveItemClassName: string;
   children: React.ReactNode;
+  /** Product mark — string should be a path under /public (e.g. /logo-healthai.png) for reliable loading */
+  brandLogo?: StaticImageData | string;
+  className?: string;
+  /** Merged onto the floating sidebar surface */
+  sidebarClassName?: string;
+  /** Main content column behind pages */
+  insetClassName?: string;
 }
 
 export default function DashboardShell({
@@ -45,10 +53,16 @@ export default function DashboardShell({
   activeItemClassName,
   inactiveItemClassName,
   children,
+  brandLogo,
+  className,
+  sidebarClassName,
+  insetClassName,
 }: DashboardShellProps) {
   const router = useRouter();
   const { logout } = useAuth();
   const rootPath = navItems[0]?.path ?? '';
+  const brandLogoSrc =
+    brandLogo === undefined ? undefined : typeof brandLogo === 'string' ? brandLogo : brandLogo.src;
 
   const handleLogout = async () => {
     await logout();
@@ -56,15 +70,63 @@ export default function DashboardShell({
   };
 
   return (
-    <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon" variant="floating" className="top-16 h-[calc(100svh-4rem)]">
-        <SidebarHeader className="border-b border-sidebar-border">
-          <div className="px-2 py-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/70">
-              {portalLabel}
-            </p>
-            {userLabel && <p className="mt-1 truncate text-sm font-semibold text-sidebar-foreground">{userLabel}</p>}
-          </div>
+    <SidebarProvider defaultOpen className={className}>
+      <Sidebar
+        collapsible="icon"
+        variant="floating"
+        innerClassName={
+          brandLogo
+            ? cn(
+                'bg-gradient-to-b from-white via-sky-50/40 to-teal-50/25',
+                'group-data-[variant=floating]:rounded-xl',
+                'group-data-[variant=floating]:shadow-[0_14px_44px_-22px_rgba(14,165,233,0.16)]',
+                'group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sky-100/65',
+              )
+            : undefined
+        }
+        className={cn(
+          'top-16 h-[calc(100svh-4rem)]',
+          sidebarClassName,
+        )}
+      >
+        <SidebarHeader
+          className={cn(
+            'border-b',
+            brandLogo ? 'border-sky-100/60 bg-white/40' : 'border-sidebar-border',
+          )}
+        >
+          {brandLogo ? (
+            <div className="flex items-start gap-2.5 px-2 py-2">
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-sm">
+                {brandLogoSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- avoid optimizer issues inside floating sidebar
+                  <img
+                    src={brandLogoSrc}
+                    alt="Health AI"
+                    width={44}
+                    height={44}
+                    className="h-9 w-9 object-contain p-1.5"
+                    decoding="async"
+                  />
+                ) : null}
+              </div>
+              <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{portalLabel}</p>
+                {userLabel ? (
+                  <p className="mt-0.5 truncate text-sm font-semibold text-slate-900">{userLabel}</p>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <div className="px-2 py-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/70">
+                {portalLabel}
+              </p>
+              {userLabel ? (
+                <p className="mt-1 truncate text-sm font-semibold text-sidebar-foreground">{userLabel}</p>
+              ) : null}
+            </div>
+          )}
         </SidebarHeader>
 
         <SidebarContent>
@@ -92,7 +154,9 @@ export default function DashboardShell({
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarFooter
+          className={cn('border-t', brandLogo ? 'border-sky-100/60' : 'border-sidebar-border')}
+        >
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -109,7 +173,7 @@ export default function DashboardShell({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset className="min-w-0 bg-transparent md:pl-1">
+      <SidebarInset className={cn('min-w-0 bg-transparent md:pl-1', insetClassName)}>
         <div className="w-full">{children}</div>
       </SidebarInset>
     </SidebarProvider>

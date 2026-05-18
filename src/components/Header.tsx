@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { HeartPulse, LogOut, PanelLeft, Settings, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -25,6 +26,7 @@ export default function Header() {
     pathname?.startsWith('/doctor') ||
     pathname?.startsWith('/patient'),
   );
+  const isDoctorPortal = Boolean(pathname?.startsWith('/doctor'));
 
   if (
     pathname?.startsWith('/auth/sign-in') ||
@@ -71,16 +73,42 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className={cn(
+        'sticky top-0 z-50 w-full border-b backdrop-blur supports-[backdrop-filter]:bg-background/60',
+        isDoctorPortal
+          ? 'border-sky-100/80 bg-white/90 supports-[backdrop-filter]:bg-white/80'
+          : 'border-border bg-background/95',
+      )}
+    >
       <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <HeartPulse className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">
-            Health<span className="text-primary">AI</span>
-          </span>
-        </Link>
+        {isDoctorPortal ? (
+          <Link href="/doctor" className="flex items-center gap-2.5">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element -- stable URL from /public */}
+              <img
+                src="/logo-healthai.png"
+                alt="Health AI"
+                width={36}
+                height={36}
+                className="h-8 w-8 object-contain p-1"
+                decoding="async"
+              />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-900">
+              Health<span className="text-teal-600">AI</span>
+            </span>
+          </Link>
+        ) : (
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <HeartPulse className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">
+              Health<span className="text-primary">AI</span>
+            </span>
+          </Link>
+        )}
 
         <div className="flex items-center gap-3">
           {user ? (

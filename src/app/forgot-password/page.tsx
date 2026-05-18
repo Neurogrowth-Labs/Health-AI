@@ -1,11 +1,18 @@
-'use client'
+'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AuthShell } from '@/components/auth/AuthShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, KeyRound, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import logoHealthAi from '@/assets/logo-healthai.png';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -83,53 +90,99 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex justify-center items-center py-16">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-3xl font-bold">Forgot password</CardTitle>
-          <CardDescription>
-            {!otpSent ? 'Enter your email to get OTP' : 'Enter OTP and your new password'}
-          </CardDescription>
+    <AuthShell>
+      <Card className="rounded-[22px] border border-sky-100/80 bg-white/90 shadow-[0_25px_60px_-15px_rgba(14,165,233,0.2)] backdrop-blur-md sm:rounded-3xl">
+        <CardHeader className="space-y-4 pb-2 text-center sm:text-left">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-sm">
+              <Image
+                src={logoHealthAi}
+                alt=""
+                width={56}
+                height={56}
+                className="object-contain p-1.5"
+                priority
+              />
+            </div>
+            <div className="space-y-1 text-center sm:text-left">
+              <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                Forgot password
+              </CardTitle>
+              <CardDescription className="text-base text-slate-600">
+                {!otpSent ? 'Enter your email and we will send a one-time code.' : 'Enter the code and choose a new password.'}
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex justify-center sm:justify-start">
+            <Badge
+              variant="secondary"
+              className="gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/90 px-3 py-1 text-xs font-medium text-emerald-800"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+              Secure reset flow
+            </Badge>
+          </div>
         </CardHeader>
+
         <form onSubmit={otpSent ? handleResetPassword : handleSendOtp}>
-          <CardContent className="space-y-4">
-            {error && <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>}
-            {message && <div className="p-3 rounded-lg bg-green-50 text-green-700 text-sm">{message}</div>}
+          <CardContent className="space-y-5 px-6 pb-6 pt-2 sm:px-8">
+            {error && (
+              <Alert
+                variant="destructive"
+                className="rounded-xl border-red-200/80 bg-red-50/90 text-red-900"
+              >
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {message && !error && (
+              <Alert className="rounded-xl border-emerald-200/80 bg-emerald-50/90 text-emerald-900">
+                <ShieldCheck className="h-4 w-4" />
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            )}
 
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium leading-none">
+              <Label htmlFor="email" className="text-slate-800">
                 Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={otpSent}
-              />
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-sky-500/80" aria-hidden />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={otpSent}
+                  className="h-11 rounded-xl border-sky-100/80 bg-sky-50/40 pl-10"
+                />
+              </div>
             </div>
 
             {otpSent && (
               <>
                 <div className="space-y-2">
-                  <label htmlFor="otp" className="text-sm font-medium leading-none">
+                  <Label htmlFor="otp" className="text-slate-800">
                     OTP code
-                  </label>
+                  </Label>
                   <Input
                     id="otp"
-                    placeholder="Enter 6-digit OTP"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="6-digit code"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     required
+                    className="h-11 rounded-xl border-sky-100/80 bg-sky-50/40 font-mono"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="newPassword" className="text-sm font-medium leading-none">
-                    New Password
-                  </label>
+                  <Label htmlFor="newPassword" className="text-slate-800">
+                    New password
+                  </Label>
                   <Input
                     id="newPassword"
                     type="password"
@@ -137,13 +190,14 @@ export default function ForgotPasswordPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
+                    className="h-11 rounded-xl border-sky-100/80 bg-sky-50/40"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">
-                    Confirm Password
-                  </label>
+                  <Label htmlFor="confirmPassword" className="text-slate-800">
+                    Confirm password
+                  </Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -151,22 +205,40 @@ export default function ForgotPasswordPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
+                    className="h-11 rounded-xl border-sky-100/80 bg-sky-50/40"
                   />
                 </div>
               </>
             )}
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Please wait...' : otpSent ? 'Reset Password' : 'Send OTP'}
+          <CardFooter className="flex flex-col gap-4 px-6 pb-8 pt-0 sm:px-8">
+            <Button
+              type="submit"
+              className="h-11 w-full gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-teal-500 font-semibold text-white shadow-lg shadow-sky-500/25 hover:from-sky-600 hover:to-teal-600"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Please wait…
+                </>
+              ) : (
+                <>
+                  <KeyRound className="h-4 w-4" aria-hidden />
+                  {otpSent ? 'Reset password' : 'Send OTP'}
+                </>
+              )}
             </Button>
-            <div className="text-sm text-center text-slate-500">
-              Back to <Link href="/auth/sign-in" className="text-blue-600 hover:underline">Sign in</Link>
-            </div>
+            <p className="text-center text-sm text-slate-500">
+              Back to{' '}
+              <Link href="/auth/sign-in" className="font-medium text-sky-600 hover:text-sky-800 hover:underline">
+                Sign in
+              </Link>
+            </p>
           </CardFooter>
         </form>
       </Card>
-    </div>
+    </AuthShell>
   );
 }
