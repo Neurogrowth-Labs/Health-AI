@@ -5,22 +5,24 @@ import { eq, and } from 'drizzle-orm';
 import { getAuthUser } from '@/lib/jwt';
 
 /**
- * GET /api/appointments?patientId=<uuid>
- * Returns all appointments for the current patient.
+ * GET /api/appointments
+ * Returns appointments belonging to the authenticated patient only.
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const patientId = req.nextUrl.searchParams.get('patientId') || user.id;
+    if (user.role !== 'PATIENT') {
+      return NextResponse.json({ error: 'This endpoint is available to patient accounts only.' }, { status: 403 });
+    }
 
     const results = await db
       .select()
       .from(appointments)
-      .where(eq(appointments.patientId, patientId));
+      .where(eq(appointments.patientId, user.id));
 
     return NextResponse.json({ appointments: results });
   } catch (error: unknown) {
@@ -39,6 +41,10 @@ export async function POST(req: NextRequest) {
     const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.role !== 'PATIENT') {
+      return NextResponse.json({ error: 'This endpoint is available to patient accounts only.' }, { status: 403 });
     }
 
     const body = await req.json();

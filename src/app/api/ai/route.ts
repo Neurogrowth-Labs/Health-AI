@@ -1,48 +1,49 @@
-import { GoogleGenAI } from "@google/genai";
-import { NextResponse } from "next/server";
+import { GoogleGenAI } from '@google/genai';
+import { NextResponse } from 'next/server';
+import { getAuthUser } from '@/lib/jwt';
+
+type ChatMessage = { role: 'user' | 'model'; text: string };
+
+const MAX_MESSAGES = 16;
+const MAX_MESSAGE_LENGTH = 1_200;
+
+function isValidMessage(value: unknown): value is ChatMessage {
+  if (!value || typeof value !== 'object') return false;
+  const message = value as Record<string, unknown>;
+  return (message.role === 'user' || message.role === 'model') && typeof message.text === 'string' && message.text.trim().length > 0 && message.text.length <= MAX_MESSAGE_LENGTH;
+}
 
 export async function POST(request: Request) {
+  const user = await getAuthUser();
+  if (!user) return NextResponse.json({ error: 'Please sign in to use AI Health.' }, { status: 401 });
+
   const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    return NextResponse.json(
-      { error: "Gemini API Key missing. Configuration required." },
-      { status: 500 }
-    );
-  }
+  if (!key) return NextResponse.json({ error: 'AI Health is not configured yet. Please contact support or find care directly.' }, { status: 503 });
 
   try {
-    const { messages, doctorExpertise } = await request.json();
+    const body = await request.json();
+    const messages = body?.messages;
+    if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES || !messages.every(isValidMessage)) {
+      return NextResponse.json({ error: 'Please send a short, valid health question.' }, { status: 400 });
+    }
 
     const ai = new GoogleGenAI({ apiKey: key });
-
-    const sysInstruction = `You are a medical AI assistant for "Health AI" clinic. 
-  You are helping a patient gather preliminary information before they see a doctor.
-  ${doctorExpertise ? `The patient is looking to speak with a ${doctorExpertise}.` : ''}
-  Ask them relevant questions one by one. Keep your answers brief, professional, and empathetic. 
-  Do not diagnose, only gather information or provide basic health tips.`;
-
-    const historyString = messages
-      .map((m: { role: string; text: string }) =>
-        `${m.role === 'user' ? 'Patient' : 'Assistant'}: ${m.text}`
-      )
-      .join('\n');
-
+    const history = messages.map((message) => `${message.role === 'user' ? 'Patient' : 'AI Health'}: ${message.text.trim()}`).join('\n');
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `${historyString}\nAssistant:`,
+      model: 'gemini-3-flash-preview',
+      contents: `${history}\nAI Health:`,
       config: {
-        systemInstruction: sysInstruction,
-        temperature: 0.3,
+        systemInstruction: `You are AI Health Navigator, a preliminary healthcare guidance and triage assistant. You are speaking with an authenticated Health AI user. Be calm, empathetic, concise, and use plain language. Do not diagnose, prescribe, claim certainty, or say that the user is safe. Gather one relevant detail at a time: symptoms, timing, severity, relevant history, medicines, allergies, pregnancy status where appropriate, location, and available vital signs. Clearly encourage immediate local emergency care for possible emergency symptoms such as severe chest pain, severe breathing difficulty, fainting, stroke-like symptoms, uncontrolled bleeding, severe allergic reaction, or immediate self-harm risk. For non-emergencies, state that a clinician can assess them and offer a practical next step. End every response with a brief reminder that this is guidance, not a diagnosis. Never invent local emergency numbers or medical records.`,
+        temperature: 0.2,
+        maxOutputTokens: 320,
       },
     });
 
-    return NextResponse.json({
-      text: response.text || "I'm sorry, I couldn't process that.",
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "AI service error" },
-      { status: 500 }
-    );
+    const text = response.text?.trim();
+    if (!text) return NextResponse.json({ error: 'AI Health could not prepare a response. Please try again or find care.' }, { status: 502 });
+    return NextResponse.json({ text });
+  } catch (error) {
+    console.error('AI Health request failed', error);
+    return NextResponse.json({ error: 'AI Health is temporarily unavailable. Please try again or find care directly.' }, { status: 503 });
   }
 }

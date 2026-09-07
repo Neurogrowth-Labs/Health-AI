@@ -1,219 +1,106 @@
 'use client';
 
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { AiCapabilityCard } from '@/components/doctor/ai-capability-card';
-import {
-  patientDashboardConnections,
-  patientMicroserviceArchitecture,
-  patientOverviewTools,
-  patientUnifiedAiLayerBullets,
-} from '@/lib/patient-ai-capabilities';
-import { Bot, CalendarPlus, MessageSquare, Search } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Activity,
+  Bell,
+  CalendarDays,
+  ChevronRight,
+  CircleAlert,
+  FileText,
+  HeartPulse,
+  MapPin,
+  Pill,
+  RefreshCw,
+  WifiOff,
+} from 'lucide-react';
+
+type Appointment = { id: string; date: string; timeStr: string; type: 'PHYSICAL' | 'VIRTUAL'; status: string };
 
 function greetingLine() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
+  const hour = new Date().getHours();
+  return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 }
 
-function LiveOutputPlaceholder({ children }: { children: ReactNode }) {
-  return (
-    <p className="rounded-md border border-dashed border-slate-200/90 bg-slate-50/70 px-3 py-4 text-center text-xs text-slate-500">
-      {children}
-    </p>
-  );
-}
-
-export function PatientCrossAiLayer() {
-  return (
-    <Card className="border-sky-200/70 bg-gradient-to-br from-sky-50/90 via-white to-teal-50/60 shadow-md">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/15 text-teal-700">
-            <Bot className="h-5 w-5" aria-hidden />
-          </span>
-          Cross-dashboard AI layer
-        </CardTitle>
-        <CardDescription>
-          Core systems that keep every module aligned with your history and preferences.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-3">
-        {patientUnifiedAiLayerBullets.map((item) => (
-          <div
-            key={item.title}
-            className="rounded-xl border border-sky-100/80 bg-white/80 p-4 shadow-sm"
-          >
-            <p className="text-sm font-semibold text-sky-950">{item.title}</p>
-            <p className="mt-2 text-xs leading-relaxed text-slate-600">{item.text}</p>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
+function formatAppointment(appointment: Appointment) {
+  const date = new Date(`${appointment.date}T${appointment.timeStr}`);
+  if (Number.isNaN(date.getTime())) return `${appointment.date} · ${appointment.timeStr}`;
+  return new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
 }
 
 export function PatientHealthCommandCenter() {
   const { user } = useAuth();
   const router = useRouter();
-  const name = user?.name?.trim() || 'there';
-  const [upcomingCount, setUpcomingCount] = useState<number | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const fetchAppointments = useCallback(async () => {
-    if (!user?.id) return;
+  const refreshAppointments = useCallback(async () => {
     try {
-      const res = await fetch(`/api/appointments?patientId=${user.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        const upcoming = (data.appointments ?? []).filter(
-          (a: { status: string }) => a.status === 'PENDING' || a.status === 'CONFIRMED',
-        );
-        setUpcomingCount(upcoming.length);
-      }
+      const response = await fetch('/api/appointments', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Unable to refresh care plan');
+      const data = await response.json();
+      setAppointments(data.appointments ?? []);
+      setLastUpdated(new Date());
     } catch {
-      // silent
+      // Preserve the last safe state and explain connectivity in the interface instead of interrupting care.
+    } finally {
+      setIsLoading(false);
     }
-  }, [user?.id]);
+  }, []);
 
   useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+    setIsOnline(navigator.onLine);
+    const online = () => { setIsOnline(true); refreshAppointments(); };
+    const offline = () => setIsOnline(false);
+    window.addEventListener('online', online);
+    window.addEventListener('offline', offline);
+    refreshAppointments();
+    const interval = window.setInterval(() => { if (navigator.onLine) refreshAppointments(); }, 30_000);
+    return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); window.clearInterval(interval); };
+  }, [refreshAppointments]);
+
+  const upcoming = appointments
+    .filter((item) => ['PENDING', 'CONFIRMED'].includes(item.status))
+    .sort((a, b) => `${a.date}T${a.timeStr}`.localeCompare(`${b.date}T${b.timeStr}`));
+  const nextAppointment = upcoming[0];
+  const firstName = user?.name?.trim().split(' ')[0] || 'there';
 
   return (
-    <div className="flex min-h-0 flex-col gap-6 text-[#0A2540]">
-      <div className="flex flex-col gap-4 rounded-xl border border-sky-100/90 bg-white/90 p-4 shadow-[0_14px_44px_-22px_rgba(14,165,233,0.14)] sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div className="min-w-0 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            AI Health Command Center
-          </p>
-          <h1 className="text-balance text-xl font-bold tracking-tight sm:text-2xl">
-            {greetingLine()}, {name}
-          </h1>
-          <p className="text-pretty text-sm text-slate-600">
-            Your overview is powered by specialized AI microservices — copilot, health score, predictive risk, and
-            smart alerts — orchestrated with your consent.
-          </p>
-          <ul className="list-inside list-disc text-xs text-slate-500">
-            {patientMicroserviceArchitecture.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 text-[#071A2B]">
+      {!isOnline && <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"><span className="flex items-center gap-2"><WifiOff className="h-4 w-4" /> Low connectivity — your last synced information remains available.</span><Button size="sm" variant="outline" onClick={refreshAppointments} className="border-amber-300 bg-white">Try again</Button></div>}
+
+      <header className="rounded-3xl border border-[#cde5df] bg-gradient-to-br from-[#f3fbf8] via-white to-[#e7f6f2] p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#008f7a]">Your health space</p><h1 className="mt-3 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">{greetingLine()}, {firstName}.</h1><p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">A clear view of your next care step, with AI guidance and a direct route to a health professional when you need one.</p></div>
+          <div className="flex items-center gap-2 text-xs text-slate-500"><span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />{isOnline ? 'Live updates on' : 'Offline view'}{lastUpdated && <span>· updated {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>}</div>
         </div>
-        <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-          <div className="flex flex-wrap gap-2">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    className="gap-2 bg-sky-600 text-white hover:bg-sky-600/90"
-                    onClick={() => router.push('/patient/ai-chat')}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    AI Copilot
-                  </Button>
-                }
-              />
-              <TooltipContent>Chat-based health assistant</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="gap-2 border-sky-200 bg-white text-sky-950 hover:bg-sky-50"
-                    onClick={() => router.push('/patient/find')}
-                  >
-                    <Search className="h-4 w-4 text-teal-600" />
-                    Find a doctor
-                  </Button>
-                }
-              />
-              <TooltipContent>AI matchmaking + semantic search</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="gap-2 border-sky-200 bg-white text-sky-950 hover:bg-sky-50"
-                    onClick={() => router.push('/patient/appointments')}
-                  >
-                    <CalendarPlus className="h-4 w-4 text-teal-600" />
-                    Appointments
-                  </Button>
-                }
-              />
-              <TooltipContent>Predictive scheduling</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-      </div>
+        <div className="mt-7 flex flex-wrap gap-3"><Button onClick={() => router.push('/patient/ai-chat')} className="h-12 rounded-full bg-[#00A88F] px-5 font-semibold text-[#071A2B] hover:bg-[#20b79f]"><HeartPulse className="mr-2 h-4 w-4" /> Ask AI Health</Button><Button variant="outline" onClick={() => router.push('/patient/find')} className="h-12 rounded-full border-[#b9d9d1] bg-white px-5"><MapPin className="mr-2 h-4 w-4 text-[#008f7a]" /> Find care</Button><Button variant="ghost" onClick={() => router.push('/patient/appointments')} className="h-12 rounded-full px-5"><CalendarDays className="mr-2 h-4 w-4" /> My care plan</Button></div>
+      </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: 'Upcoming appointments', value: upcomingCount !== null ? String(upcomingCount) : '—', hint: 'Smart booking + no-show AI' },
-          { label: 'Active consults', value: '—', hint: 'Live assist + transcription' },
-          { label: 'Documents processed', value: '—', hint: 'OCR & categorization' },
-          { label: 'Health score', value: '—', hint: 'GET /ai/health-score' },
-        ].map((kpi) => (
-          <Card key={kpi.label} className="border-slate-200/90 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                {kpi.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-sky-950">{kpi.value}</div>
-              <p className="mt-1 text-[11px] text-slate-500">{kpi.hint}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <section className="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+        <Card className="border-[#d9e8e4] shadow-sm"><CardContent className="p-6"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-500">What is happening?</p><h2 className="mt-2 text-xl font-semibold">{nextAppointment ? 'Your next care appointment is scheduled.' : 'You have no upcoming appointments.'}</h2></div><CalendarDays className="h-5 w-5 text-[#008f7a]" /></div>{isLoading ? <div className="mt-6 h-16 animate-pulse rounded-xl bg-slate-100" /> : nextAppointment ? <div className="mt-6 rounded-2xl bg-[#f4faf8] p-4"><p className="font-semibold">{formatAppointment(nextAppointment)}</p><p className="mt-1 text-sm text-slate-600">{nextAppointment.type === 'VIRTUAL' ? 'Virtual consultation' : 'In-person appointment'} · {nextAppointment.status.toLowerCase()}</p></div> : <p className="mt-5 text-sm leading-6 text-slate-600">Find a verified clinician or use AI Health Navigator to understand the right next step.</p>}<div className="mt-6 flex items-center justify-between border-t border-[#e7efec] pt-4"><span className="text-sm text-slate-600">What should happen next?</span><Button variant="ghost" size="sm" onClick={() => router.push(nextAppointment ? '/patient/appointments' : '/patient/find')}>{nextAppointment ? 'View appointment' : 'Find care'} <ChevronRight className="ml-1 h-4 w-4" /></Button></div></CardContent></Card>
+        <Card className="border-[#d9e8e4] bg-[#071A2B] text-white shadow-sm"><CardContent className="p-6"><div className="flex items-center gap-2 text-[#80ddcf]"><Activity className="h-4 w-4" /><p className="text-xs font-bold uppercase tracking-[.14em]">AI Health Navigator</p></div><h2 className="mt-3 text-xl font-semibold">Tell us what is happening.</h2><p className="mt-3 text-sm leading-6 text-slate-300">Answer a few structured questions. You can always stop, contact a clinician, or seek urgent care.</p><Button onClick={() => router.push('/patient/ai-chat')} className="mt-6 h-10 w-full rounded-xl bg-[#00A88F] font-semibold text-[#071A2B] hover:bg-[#20b79f]">Start a health check</Button></CardContent></Card>
+      </section>
 
-      {/* <div>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">AI tools in this hub</h2>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
-          {patientOverviewTools.map((cap) => (
-            <AiCapabilityCard key={cap.id} capability={cap}>
-              {cap.id === 'copilot' && (
-                <LiveOutputPlaceholder>
-                  Connect chat history and vitals feeds to activate contextual copilot replies here.
-                </LiveOutputPlaceholder>
-              )}
-              {cap.id === 'health-score' && (
-                <LiveOutputPlaceholder>
-                  Your dynamic score and preventative tips will render once vitals and behavior data sync.
-                </LiveOutputPlaceholder>
-              )}
-            </AiCapabilityCard>
-          ))}
-        </div>
-      </div> */}
+      <section><div className="mb-3 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-500">Quick actions</p><h2 className="mt-1 text-xl font-semibold">Take care of what matters now.</h2></div><Button size="icon-sm" variant="ghost" aria-label="Refresh care information" onClick={refreshAppointments}><RefreshCw className="h-4 w-4" /></Button></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[{ label: 'Check symptoms', description: 'Guided next steps', icon: HeartPulse, route: '/patient/ai-chat' }, { label: 'Book care', description: 'Find a clinician', icon: CalendarDays, route: '/patient/find' }, { label: 'Health records', description: 'Documents and results', icon: FileText, route: '/patient/documents' }, { label: 'Medication', description: 'Manage care details', icon: Pill, route: '/patient/settings' }].map(({ label, description, icon: Icon, route }) => <button key={label} onClick={() => router.push(route)} className="group rounded-2xl border border-[#d9e8e4] bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#93cfc1] hover:shadow-md"><Icon className="h-5 w-5 text-[#008f7a]" /><p className="mt-7 font-semibold">{label}</p><p className="mt-1 text-sm text-slate-500">{description}</p></button>)}</div></section>
 
-      <Card className="border-slate-200/80 bg-slate-50/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-slate-800">How modules connect</CardTitle>
-          <CardDescription>Each screen below runs additional engines on the same patient graph.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-xs text-slate-600">
-          {patientDashboardConnections.map((row) => (
-            <p key={row.from}>
-              <span className="font-semibold text-sky-900">{row.from}:</span> {row.to}
-            </p>
-          ))}
-        </CardContent>
-      </Card>
+      <section className="grid gap-4 md:grid-cols-2"><div className="rounded-2xl border border-[#d9e8e4] bg-white p-5"><div className="flex items-center gap-2"><Bell className="h-4 w-4 text-[#008f7a]" /><h2 className="font-semibold">Care reminders</h2></div><p className="mt-3 text-sm leading-6 text-slate-600">We will only notify you about appointment changes and important care updates. You can manage notifications in settings.</p></div><div className="rounded-2xl border border-[#f0dca5] bg-[#fffbef] p-5"><div className="flex items-center gap-2"><CircleAlert className="h-4 w-4 text-[#a97700]" /><h2 className="font-semibold">Need urgent help?</h2></div><p className="mt-3 text-sm leading-6 text-slate-700">For severe symptoms or an emergency, contact local emergency services or go to the nearest emergency facility.</p></div></section>
+    </div>
+  );
+}
 
-      {/* <PatientCrossAiLayer /> */}
+/** A concise, reusable trust reminder for secondary patient workflows. */
+export function PatientCrossAiLayer() {
+  return (
+    <div className="rounded-2xl border border-[#d9e8e4] bg-[#f8fbfa] p-5">
+      <div className="flex items-center gap-2 text-[#008f7a]"><HeartPulse className="h-4 w-4" /><p className="text-xs font-bold uppercase tracking-[.14em]">Your Health AI</p></div>
+      <p className="mt-2 text-sm leading-6 text-slate-600">AI guidance is based only on the information you choose to share. It supports your next step and never replaces a clinician’s judgment.</p>
     </div>
   );
 }
