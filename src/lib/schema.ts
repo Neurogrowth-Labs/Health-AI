@@ -112,6 +112,18 @@ export const documents = pgTable('documents', {
   uploadDate: timestamp('upload_date').defaultNow().notNull(),
 });
 
+export const doctorCredentials = pgTable('doctor_credentials', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  doctorId: uuid('doctor_id').notNull().references(() => users.id),
+  title: varchar('title', { length: 255 }).notNull(),
+  issuer: varchar('issuer', { length: 255 }).notNull(),
+  credentialNumber: varchar('credential_number', { length: 120 }),
+  expiresAt: varchar('expires_at', { length: 10 }),
+  url: text('url').notNull(),
+  isPublic: boolean('is_public').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [index('doctor_credentials_doctor_id_idx').on(table.doctorId)]);
+
 export const passwordResetOtps = pgTable('password_reset_otps', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').notNull().references(() => users.id),
