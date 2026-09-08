@@ -76,6 +76,9 @@ export default function Header() {
   const showHealthBranding = isDoctorPortal || isPatientPortal;
   const isLandingPage = pathname === '/' && !user;
   const homeHref = isDoctorPortal ? '/doctor' : isPatientPortal ? '/patient' : '/';
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <header
@@ -84,23 +87,23 @@ export default function Header() {
         isLandingPage
           ? 'border-white/10 bg-[#0A2540]/95 supports-[backdrop-filter]:bg-[#0A2540]/90'
           : showHealthBranding
-            ? 'border-sky-100/80 bg-white/90 supports-[backdrop-filter]:bg-white/80'
+            ? 'border-[#e5eaea] bg-white/90 supports-[backdrop-filter]:bg-white/80'
             : 'border-border bg-background/95',
       )}
     >
-      <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {isLandingPage ? (
           <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00C2A8]/15">
               <HeartPulse className="h-4 w-4 text-[#00C2A8]" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
-              Health<span className="text-[#00C2A8]">AI</span>
+              Africa <span className="text-[#55cfc0]">AI Health</span>
             </span>
           </Link>
         ) : showHealthBranding ? (
           <Link href={homeHref} className="flex items-center gap-2.5">
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#e5eaea] bg-white shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element -- stable URL from /public */}
               <img
                 src="/logo-healthai.png"
@@ -126,7 +129,15 @@ export default function Header() {
           </Link>
         )}
 
-        <div className="flex items-center gap-3">
+        {isLandingPage && (
+          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-300 lg:flex" aria-label="Primary navigation">
+            <button onClick={() => scrollTo('platform')} className="transition-colors hover:text-white">Platform</button>
+            <button onClick={() => scrollTo('governance')} className="transition-colors hover:text-white">Governance</button>
+            <button onClick={() => scrollTo('governance')} className="transition-colors hover:text-white">For organizations</button>
+          </nav>
+        )}
+
+        <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <>
               {isDashboardRoute && (
@@ -183,14 +194,14 @@ export default function Header() {
               <Button
                 variant="ghost"
                 onClick={() => router.push('/auth/sign-in')}
-                className={cn(isLandingPage && 'text-white hover:bg-white/10 hover:text-white')}
+                className={cn(isLandingPage && 'hidden text-white hover:bg-white/10 hover:text-white sm:inline-flex')}
               >
                 Login
               </Button>
               <Button
                 onClick={() => router.push('/auth/register')}
                 className={cn(
-                  isLandingPage && 'rounded-full bg-[#00C2A8] text-[#0A2540] hover:bg-[#00C2A8]/90 font-semibold',
+                  isLandingPage && 'rounded-full bg-[#00A88F] text-[#071A2B] hover:bg-[#24bba5] font-semibold',
                 )}
               >
                 Sign Up

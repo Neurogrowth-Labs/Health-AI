@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +57,8 @@ export default function DoctorPersonalizationCenter() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [credentialMessage, setCredentialMessage] = useState('');
+  const [uploadingCredential, setUploadingCredential] = useState(false);
 
   const [aiDiagnosis, setAiDiagnosis] = useState(true);
   const [aiAssistLevel, setAiAssistLevel] = useState(55);
@@ -117,6 +119,20 @@ export default function DoctorPersonalizationCenter() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const uploadCredential = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setCredentialMessage('Choose a file smaller than 2 MB.'); return; }
+    setUploadingCredential(true); setCredentialMessage('');
+    try {
+      const url = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file); });
+      const response = await fetch('/api/doctor/credentials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: file.name.replace(/\.[^.]+$/, ''), issuer: form.practice || 'Credential issuer', url, isPublic: true }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Credential upload failed.');
+      setCredentialMessage('Credential uploaded and visible to patients viewing your profile.');
+    } catch (uploadError) { setCredentialMessage(uploadError instanceof Error ? uploadError.message : 'Credential upload failed.'); } finally { setUploadingCredential(false); event.target.value = ''; }
   };
 
   return (
@@ -276,7 +292,12 @@ export default function DoctorPersonalizationCenter() {
                     <CardDescription>Licenses and certifications</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-slate-600">Credential verification coming soon.</p>
+                    <p className="text-sm leading-6 text-slate-600">Upload licenses and certifications to make them visible to patients. Credentials remain attributable to your verified professional profile.</p>
+                    <label className="mt-4 inline-flex h-10 cursor-pointer items-center rounded-xl bg-[#071A2B] px-4 text-sm font-medium text-white hover:bg-[#163B4D]">
+                      <input className="sr-only" type="file" accept=".pdf,image/*" onChange={uploadCredential} disabled={uploadingCredential} />
+                      {uploadingCredential ? 'Uploading…' : 'Upload credential'}
+                    </label>
+                    {credentialMessage && <p role="status" className="mt-3 text-sm text-slate-600">{credentialMessage}</p>}
                   </CardContent>
                 </Card>
               </div>

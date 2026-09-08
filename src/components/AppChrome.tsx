@@ -22,10 +22,10 @@ export function AppChrome({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        'flex min-h-screen w-full flex-col font-sans text-slate-900',
+        'health-surface flex min-h-screen w-full flex-col font-sans text-[#102027]',
         isBrandedPortal
-          ? 'bg-gradient-to-b from-sky-50/70 via-[#F5F7FA] to-teal-50/40'
-          : 'bg-[#F5F7FA]',
+          ? 'bg-gradient-to-b from-[#f7f9f8] via-[#f7f9f8] to-[#edf7f4]'
+          : 'bg-[#F7F9F8]',
       )}
     >
       <Header />

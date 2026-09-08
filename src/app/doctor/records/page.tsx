@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +10,12 @@ import { dashboardConnections, emrTools } from '@/lib/doctor-ai-capabilities';
 import { Search, Upload } from 'lucide-react';
 
 export default function PatientRecordsPage() {
+  const [sharedDocuments, setSharedDocuments] = useState<{ id: string; title: string; category: string; uploadDate: string; url: string }[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/documents').then(async (response) => response.ok ? response.json() : { documents: [] }).then((data) => setSharedDocuments(data.documents ?? [])).catch(() => setSharedDocuments([])).finally(() => setLoadingDocuments(false));
+  }, []);
   return (
     <div className="space-y-4 text-[#0A2540]">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -90,9 +98,7 @@ export default function PatientRecordsPage() {
           </Button>
         </CardHeader>
         <CardContent className="pt-4">
-          <p className="rounded-lg border border-dashed border-slate-300/80 bg-slate-50/50 px-3 py-8 text-center text-sm text-slate-500">
-            No documents yet. Upload files or connect an EHR import — document intelligence will extract key fields.
-          </p>
+          {loadingDocuments ? <div className="health-skeleton h-24 rounded-xl" /> : sharedDocuments.length === 0 ? <p className="rounded-lg border border-dashed border-slate-300/80 bg-slate-50/50 px-3 py-8 text-center text-sm text-slate-500">No patient documents have been shared with you yet.</p> : <div className="divide-y divide-[#e5eaea]">{sharedDocuments.map((document) => <div key={document.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-sm font-medium text-[#071A2B]">{document.title}</p><p className="mt-0.5 text-xs text-slate-500">{document.category.replaceAll('_', ' ').toLowerCase()} · shared by patient</p></div><a href={document.url} target="_blank" rel="noreferrer"><Button size="sm" variant="outline">Open</Button></a></div>)}</div>}
         </CardContent>
       </Card>
     </div>
