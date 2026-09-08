@@ -87,7 +87,7 @@ export default function Header() {
         isLandingPage
           ? 'border-white/10 bg-[#0A2540]/95 supports-[backdrop-filter]:bg-[#0A2540]/90'
           : showHealthBranding
-            ? 'border-sky-100/80 bg-white/90 supports-[backdrop-filter]:bg-white/80'
+            ? 'border-[#e5eaea] bg-white/90 supports-[backdrop-filter]:bg-white/80'
             : 'border-border bg-background/95',
       )}
     >
@@ -103,7 +103,7 @@ export default function Header() {
           </Link>
         ) : showHealthBranding ? (
           <Link href={homeHref} className="flex items-center gap-2.5">
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#e5eaea] bg-white shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element -- stable URL from /public */}
               <img
                 src="/logo-healthai.png"

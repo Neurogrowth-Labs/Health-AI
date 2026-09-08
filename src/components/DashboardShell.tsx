@@ -75,10 +75,10 @@ export default function DashboardShell({
         innerClassName={
           brandLogo
             ? cn(
-                'bg-gradient-to-b from-white via-sky-50/40 to-teal-50/25',
+                'bg-gradient-to-b from-white via-[#f7fbfa] to-[#edf7f4]',
                 'group-data-[variant=floating]:rounded-xl',
-                'group-data-[variant=floating]:shadow-[0_14px_44px_-22px_rgba(14,165,233,0.16)]',
-                'group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sky-100/65',
+                'group-data-[variant=floating]:shadow-[0_18px_44px_-28px_rgba(7,26,43,0.24)]',
+                'group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-[#e5eaea]',
               )
             : undefined
         }
@@ -87,12 +87,12 @@ export default function DashboardShell({
         <SidebarHeader
           className={cn(
             'border-b',
-            brandLogo ? 'border-sky-100/60 bg-white/40' : 'border-sidebar-border',
+            brandLogo ? 'border-[#e5eaea] bg-white/60' : 'border-sidebar-border',
           )}
         >
           {brandLogo ? (
             <div className="flex items-start gap-2.5 px-2 py-2">
-              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-sm">
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#e5eaea] bg-white shadow-sm">
                 {brandLogoSrc ? (
                   // eslint-disable-next-line @next/next/no-img-element -- reliable in floating sidebar
                   <img
@@ -151,7 +151,7 @@ export default function DashboardShell({
         </SidebarContent>
 
         <SidebarFooter
-          className={cn('border-t', brandLogo ? 'border-sky-100/60' : 'border-sidebar-border')}
+          className={cn('border-t', brandLogo ? 'border-[#e5eaea]' : 'border-sidebar-border')}
         >
           <SidebarMenu>
             <SidebarMenuItem>
