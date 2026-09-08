@@ -55,7 +55,7 @@ export default function PatientAppointmentsPage() {
     if (!user?.id) return;
     try {
       const [apptRes, docRes] = await Promise.all([
-        fetch(`/api/appointments?patientId=${user.id}`),
+        fetch('/api/appointments'),
         fetch('/api/doctors'),
       ]);
 
